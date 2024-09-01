@@ -30,7 +30,7 @@ class RegisterController extends Controller
         $input = $request->all();
         $input['password'] = Hash::make($input['password']);
         $user = User::create($input);
-        $success['token'] = $user->createToken('ZemmaxApp')->accessToken;
+        $success['token'] = $user->createToken('ZennexApp')->accessToken;
         $success['name'] = $user->name;
 
         return response()->json([
@@ -55,7 +55,7 @@ class RegisterController extends Controller
 
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             $user = Auth::user();
-            $success['token'] = $user->createToken('ZemmaxApp')->accessToken;
+            $success['token'] = $user->createToken('ZennexApp')->accessToken;
             $success['name'] = $user->name;
 
             return response()->json([
