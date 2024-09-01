@@ -1,0 +1,192 @@
+openapi: 3.0.0
+info:
+  title: Note API
+  version: 1.0.0
+  description: API для управления заметками, включая регистрацию пользователей, авторизацию и операции с заметками.
+paths:
+  /register:
+    post:
+      summary: Регистрация нового пользователя
+      description: Регистрация нового пользователя в системе.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "John Doe"
+                email:
+                  type: string
+                  example: "john@example.com"
+                password:
+                  type: string
+                  example: "password123"
+                c_password:
+                  type: string
+                  example: "password123"
+      responses:
+        '201':
+          description: Пользователь успешно зарегистрирован
+        '400':
+          description: Ошибка валидации
+
+  /login:
+    post:
+      summary: Авторизация
+      description: Авторизирует пользователя в системе, возвращая Bearer код
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "john@example.com"
+                password:
+                  type: string
+                  example: "password123"
+      responses:
+        '200':
+          description: Успешная авторизация
+        '401':
+          description: Не удалось авторизироваться - неправильный адрес электронной почты или пароль.
+
+  /note/{id}:
+    get:
+      summary: Получить заметку по ID
+      description: Возвращает полную информацию о заметке, включая теги
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Заметка найдена
+        '401':
+          description: Заметка не текущего авторизированного пользователя
+        '404':
+          description: Заметка не найдена
+
+  /note/create:
+    post:
+      summary: Создаёт новую заметку
+      description: Создаёт новую заметку, закрепляя её за текущим авторизированным пользоватлем.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: "My New Note"
+                content:
+                  type: string
+                  example: "This is the content of my new note."
+      responses:
+        '201':
+          description: Заметка успешно создана
+        '400':
+          description: Плохие данные - ошибка валидации
+
+  /note/update/{id}:
+    post:
+      summary: Обновление данных заметки
+      description: Обновление данных заметки по её ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: "Updated Note Title"
+                content:
+                  type: string
+                  example: "Updated content of the note."
+      responses:
+        '200':
+          description: Заметка успешно обновлена.
+        '404':
+          description: Заметка не найдена.
+        '500':
+          description: Нельзя отредактировать привязку заметки.
+
+  /note/delete/{id}:
+    delete:
+      summary: Удалить заметку
+      description: Удаление заметки по её ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Заметка удалена
+        '403':
+          description: Заметка прикреплена за другим пользователем, доступ запрещён.
+        '404':
+          description: Заметка не найдена
+
+  /note/tags/add/{id}:
+    post:
+      summary: Добавление тега к заметке
+      description: Добавляет тег к заметке по её ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tags:
+                  type: string
+                  example: "New Tag"
+      responses:
+        '200':
+          description: Тег успешно добавлен
+        '400':
+          description: 'Тег добавить невозможно: такой тег уже привязан.'
+        '403':
+          description: Заметка не принадлежит пользователю, доступ запрещён.
+        '404':
+          description: Заметка не найдена
+
+  /note/search:
+    get:
+      summary: Поиск заметки
+      description: Ищет заметку по переданному тегу.
+      parameters:
+        - name: tag
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Тег, привязанный к заметке. Если не указать, выведет все закреплённые за пользователем заметки.
+      responses:
+        '200':
+          description: Поиск произведён успешно.
