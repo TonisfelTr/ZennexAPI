@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Note;
+use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -105,13 +106,16 @@ class NoteController extends Controller
     }
 
     public function search(Request $request): JsonResponse {
+        // Не самая лучшая реализация.
         if ($request->tag) {
-            $notes = Note::whereJsonContains('tags', $request->tag)
-                         ->where('user_id', auth()->user()->id)
+            $notes = Tag::where('tags.title', $request->tag)
+                         ->join('notes', 'notes.id', '=', 'tags.note_id')
+                         ->where('notes.user_id', auth()->user()->id)
                          ->get();
         } else {
-            $notes = Note::where('user_id', auth()->user()->id)
-                ->get();
+            $notes = Tag::join('notes', 'notes.id', '=', 'tags.note_id')
+                        ->where('tags.user_id', auth()->user()->id)
+                        ->get();
         }
 
         $notesInfo = [];
@@ -135,22 +139,19 @@ class NoteController extends Controller
         if ($note->user_id == auth()->user()->id) {
             $tags = $note->tags;
 
-            if (!is_array($tags)) {
-                $tags = [];
-            }
-
             $newTag = $request->post('tag');
 
-            if (in_array($newTag, $tags)) {
+            if ($tags->where('title', $newTag)->count() > 0) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Note has this tag already.'
                                         ], 400);
             }
 
-            $tags[] = $newTag;
-            $note->tags = $tags;
-            $note->save();
+            $tag = new Tag();
+            $tag->title = $newTag;
+            $tag->note_id = $note->id;
+            $tag->save();
 
             return response()->json([
                 'status' => true,
